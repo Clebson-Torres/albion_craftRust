@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 
 const statusEl = document.querySelector("#status");
+const versionBadge = document.querySelector("#version-badge");
+const hotkeyBadge = document.querySelector("#hotkey-badge");
 const serverSelect = document.querySelector("#server-select");
 const citySelect = document.querySelector("#city-select");
 const strategySelect = document.querySelector("#strategy-select");
@@ -49,6 +51,9 @@ function setStatus(text, kind = "default") {
 }
 
 function renderControls(config) {
+  versionBadge.textContent = `v${config.version}`;
+  hotkeyBadge.textContent = config.hotkey;
+
   serverSelect.innerHTML = "";
   for (const server of serverOptions) {
     const option = document.createElement("option");
@@ -92,8 +97,8 @@ function renderControls(config) {
 function renderRanking(result) {
   rankingList.innerHTML = "";
   metaText.textContent = result.stale
-    ? "Mostrando ultimo refresh valido"
-    : "Dados atualizados agora";
+    ? "Mostrando o ultimo refresh valido"
+    : "Dados recentes para decisao rapida";
 
   if (!result.items.length) {
     rankingList.textContent = "Nenhuma oportunidade encontrada.";
@@ -107,19 +112,22 @@ function renderRanking(result) {
   }
 
   for (const item of result.items) {
+    const selected = item.itemId === state.selectedItemId;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `ranking-item ${item.itemId === state.selectedItemId ? "active" : ""}`;
+    button.className = `ranking-item ${selected ? "active" : ""}`;
     button.innerHTML = `
       <img class="item-icon" src="${itemIconUrl(item.itemId)}" alt="${item.itemId}">
       <div class="item-main">
-        <strong>${item.itemId}</strong>
-        <p class="item-sub">Venda: ${item.sellTarget}</p>
-        <p class="item-sub">Craft: ${formatNumber(item.craftCost)}</p>
-        <p class="item-sub">Qtd: ${formatNumber(item.maxQuantity)} | Total: ${formatNumber(item.totalNetProfit)}</p>
+        <div class="item-row">
+          <strong>${item.itemId}</strong>
+          <span class="item-sub">${item.sellTarget}</span>
+        </div>
+        <p class="item-sub">Lucro/u ${formatNumber(item.netProfit)} | Total ${formatNumber(item.totalNetProfit)}</p>
+        <p class="item-sub">Craft ${formatNumber(item.craftCost)} | Qtd ${formatNumber(item.maxQuantity)}</p>
       </div>
       <div class="item-profit">
-        <strong>${formatNumber(item.netProfit)}</strong>
+        <strong>${formatNumber(item.totalNetProfit)}</strong>
         <span class="item-sub">${item.confidence.label}</span>
       </div>
     `;
@@ -130,6 +138,15 @@ function renderRanking(result) {
     });
     rankingList.append(button);
   }
+}
+
+function buildSummaryCard(label, value, extraClass = "") {
+  return `
+    <div class="detail-card">
+      <span>${label}</span>
+      <strong class="${extraClass}">${value}</strong>
+    </div>
+  `;
 }
 
 function renderDetail() {
@@ -149,39 +166,54 @@ function renderDetail() {
       <div>
         <h2>${item.itemId}</h2>
         <p>${item.sellTarget}</p>
-        <p class="detail-sub">${state.config.server} | ${premiumLabel}</p>
+        <p class="detail-sub">${state.config.server} | ${premiumLabel} | Atualizado ${item.observedAt}</p>
       </div>
     </div>
-    <div class="facts">
-      <div class="fact"><span>Lucro liquido/un</span><strong>${formatNumber(item.netProfit)}</strong></div>
-      <div class="fact"><span>Custo de craft</span><strong>${formatNumber(item.craftCost)}</strong></div>
-      <div class="fact"><span>Venda</span><strong>${formatNumber(item.sellPrice)}</strong></div>
-      <div class="fact"><span>Confianca</span><strong class="${confidenceClass}">${item.confidence.label} (${item.confidence.score})</strong></div>
-      <div class="fact"><span>Observado em</span><strong>${item.observedAt}</strong></div>
-      <div class="fact"><span>Transporte/u</span><strong>${formatNumber(state.config.transportCostPerUnit)}</strong></div>
-      <div class="fact"><span>Qtd maxima</span><strong>${formatNumber(item.maxQuantity)}</strong></div>
-      <div class="fact"><span>Lucro total</span><strong>${formatNumber(item.totalNetProfit)}</strong></div>
-      <div class="fact"><span>Capital usado</span><strong>${formatNumber(item.budgetUsed)}</strong></div>
-      <div class="fact"><span>Capital restante</span><strong>${formatNumber(item.budgetRemaining)}</strong></div>
-      <div class="fact"><span>Taxa de compra</span><strong>${formatNumber(item.buyFeeTotal)}</strong></div>
-      <div class="fact"><span>Taxa de venda</span><strong>${formatNumber(item.sellFeeTotal)}</strong></div>
-      <div class="fact"><span>Impacto total taxas</span><strong>${formatNumber(item.totalFeeImpact)}</strong></div>
+
+    <div class="detail-summary">
+      ${buildSummaryCard("Lucro liquido/u", formatNumber(item.netProfit))}
+      ${buildSummaryCard("Lucro total", formatNumber(item.totalNetProfit), item.netProfit >= 0 ? "confidence-high" : "confidence-low")}
+      ${buildSummaryCard("Custo de craft", formatNumber(item.craftCost))}
+      ${buildSummaryCard("Venda", formatNumber(item.sellPrice))}
+      ${buildSummaryCard("Qtd maxima", formatNumber(item.maxQuantity))}
+      ${buildSummaryCard("Confianca", `${item.confidence.label} (${item.confidence.score})`, confidenceClass)}
     </div>
-    <div>
-      <h3>Materiais</h3>
-      <div class="materials">
-        ${item.ingredients.map((ingredient) => `
-          <div class="material-row">
-            <div class="material-main">
-              <img class="material-icon" src="${itemIconUrl(ingredient.materialId)}" alt="${ingredient.materialId}">
-              <div>
-                <strong>${ingredient.materialId} x${formatNumber(ingredient.amount)}</strong>
-                <span>${ingredient.sourceCity} | ${formatNumber(ingredient.unitPrice)} cada</span>
+
+    <div class="detail-groups">
+      <div>
+        <div class="group-header">
+          <h3>Financeiro</h3>
+          <p>Capital e taxas aplicadas</p>
+        </div>
+        <div class="detail-summary">
+          ${buildSummaryCard("Capital usado", formatNumber(item.budgetUsed))}
+          ${buildSummaryCard("Capital restante", formatNumber(item.budgetRemaining))}
+          ${buildSummaryCard("Taxa de compra", formatNumber(item.buyFeeTotal))}
+          ${buildSummaryCard("Taxa de venda", formatNumber(item.sellFeeTotal))}
+          ${buildSummaryCard("Impacto total", formatNumber(item.totalFeeImpact))}
+          ${buildSummaryCard("Transporte/u", formatNumber(state.config.transportCostPerUnit))}
+        </div>
+      </div>
+
+      <div>
+        <div class="group-header">
+          <h3>Materiais</h3>
+          <p>Lista de compra do item selecionado</p>
+        </div>
+        <div class="materials">
+          ${item.ingredients.map((ingredient) => `
+            <div class="material-row">
+              <div class="material-main">
+                <img class="material-icon" src="${itemIconUrl(ingredient.materialId)}" alt="${ingredient.materialId}">
+                <div>
+                  <strong>${ingredient.materialId} x${formatNumber(ingredient.amount)}</strong>
+                  <span>${ingredient.sourceCity} | ${formatNumber(ingredient.unitPrice)} cada</span>
+                </div>
               </div>
+              <strong>${formatNumber(ingredient.unitPrice * ingredient.amount)}</strong>
             </div>
-            <strong>${formatNumber(ingredient.unitPrice * ingredient.amount)}</strong>
-          </div>
-        `).join("")}
+          `).join("")}
+        </div>
       </div>
     </div>
   `;

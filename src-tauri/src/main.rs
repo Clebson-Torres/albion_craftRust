@@ -9,6 +9,7 @@ use albion_crafting_overlay::services::refresh::{AlbionApiSource, RefreshResult,
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, State};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+use tauri_plugin_window_state::Builder as WindowStateBuilder;
 
 const DEFAULT_CURRENT_CITY: &str = "Caerleon";
 const DEFAULT_TRANSPORT_COST_PER_UNIT: u64 = 0;
@@ -23,6 +24,7 @@ struct AppState {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct UiConfig {
+    version: String,
     locations: Vec<String>,
     server: AlbionServer,
     current_city: String,
@@ -48,6 +50,7 @@ struct PreferencesPayload {
 #[tauri::command]
 fn get_ui_config(state: State<'_, AppState>) -> UiConfig {
     UiConfig {
+        version: env!("CARGO_PKG_VERSION").to_owned(),
         locations: state.config.locations.clone(),
         server: state.config.server,
         current_city: DEFAULT_CURRENT_CITY.to_owned(),
@@ -104,6 +107,7 @@ fn main() {
             config,
         })
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(WindowStateBuilder::default().build())
         .setup(|app| {
             let main_window = app.get_webview_window("main").expect("main window");
             let handle = app.handle().clone();

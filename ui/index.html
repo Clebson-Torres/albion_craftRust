@@ -7,48 +7,59 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div id="app">
+    <div id="app" class="app-shell">
       <header class="topbar">
-        <div>
+        <div class="brand">
           <p class="eyebrow">Albion Crafting Overlay</p>
-          <h1>Crafting para bolsas e capas</h1>
+          <h1>Crafting lateral para bolsas e capas</h1>
+          <div class="brand-meta">
+            <span id="version-badge" class="meta-pill">v--</span>
+            <span id="hotkey-badge" class="meta-pill">Ctrl+Shift+A</span>
+          </div>
         </div>
-        <div id="status" class="status">Carregando...</div>
+        <div class="topbar-actions">
+          <div id="status" class="status">Carregando...</div>
+          <button id="refresh-button" class="refresh-button" type="button">Atualizar</button>
+        </div>
       </header>
 
-      <section class="controls">
-        <label>
-          Servidor
-          <select id="server-select"></select>
-        </label>
-        <label>
-          Cidade atual
-          <select id="city-select"></select>
-        </label>
-        <label>
-          Compra
-          <select id="strategy-select"></select>
-        </label>
-        <label>
-          Transporte por unidade
-          <input id="transport-input" type="number" min="0" max="500" step="1" />
-        </label>
-        <label>
-          Premium
-          <select id="premium-select"></select>
-        </label>
-        <label>
-          Orcamento disponivel
-          <input id="budget-input" type="number" min="0" step="1000" />
-        </label>
-        <button id="refresh-button" type="button">Atualizar</button>
+      <section class="controls panel">
+        <div class="controls-grid">
+          <label>
+            Servidor
+            <select id="server-select"></select>
+          </label>
+          <label>
+            Cidade atual
+            <select id="city-select"></select>
+          </label>
+          <label>
+            Premium
+            <select id="premium-select"></select>
+          </label>
+          <label>
+            Compra
+            <select id="strategy-select"></select>
+          </label>
+          <label>
+            Transporte/u
+            <input id="transport-input" type="number" min="0" max="500" step="1" />
+          </label>
+          <label>
+            Orcamento
+            <input id="budget-input" type="number" min="0" step="1000" />
+          </label>
+        </div>
       </section>
 
-      <main class="layout">
+      <main class="stack-layout">
         <section class="panel ranking-panel">
-          <div class="panel-header">
-            <h2>Top oportunidades</h2>
-            <p id="meta-text"></p>
+          <div class="panel-header compact">
+            <div>
+              <h2>Scanner</h2>
+              <p id="meta-text"></p>
+            </div>
+            <span class="hint-pill">Top operacional</span>
           </div>
           <div id="ranking-list" class="ranking-list"></div>
         </section>

@@ -2,6 +2,8 @@
 
 Overlay desktop em Rust + Tauri para consultar oportunidades de crafting no Albion Online sem sair do jogo.
 
+Versao atual do app: `0.1.1`
+
 ## O que a V2 faz
 
 - mostra um top de oportunidades para `bags` e `capes`
@@ -13,6 +15,8 @@ Overlay desktop em Rust + Tauri para consultar oportunidades de crafting no Albi
 - mostra icones do item e dos materiais para facilitar a compra
 - atualiza os dados em background
 - reutiliza o ultimo ranking valido quando a API falha
+- abre com foco em overlay lateral esquerda para uso ao lado do market
+- lembra a ultima posicao da janela depois que voce mover a app
 
 ## Como rodar
 
@@ -24,6 +28,14 @@ npm run tauri dev
 Hotkey atual:
 
 - `Ctrl+Shift+A` para alternar a visibilidade da janela
+
+## Layout pensado para o jogo
+
+- primeira abertura no lado esquerdo da tela
+- lista curta de oportunidades na parte superior
+- detalhe operacional na parte inferior
+- centro da tela livre para a loja
+- lado direito livre para o inventario
 
 ## Build local
 
@@ -62,6 +74,13 @@ O repositorio inclui workflows de GitHub Actions para:
 - `cargo clippy --all-targets --all-features -- -D warnings`
 - `cargo check --manifest-path src-tauri/Cargo.toml`
 - release com bundles Windows (`.msi` e instalador `.exe`/NSIS) e Linux (`.AppImage` e `.deb`)
+
+Os metadados de versao do app ficam alinhados entre:
+
+- `package.json`
+- `Cargo.toml`
+- `src-tauri/Cargo.toml`
+- `src-tauri/tauri.conf.json`
 
 ## Proximos passos naturais
 
